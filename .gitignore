@@ -1,0 +1,21 @@
+.build
+.env
+*.env
+.idea
+.log
+.tsbuildinfo
+.vscode
+build
+dist
+node_modules
+coverage
+.DS_Store
+secrets.env
+
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
