@@ -39,6 +39,8 @@ interface IVaultV2 is IERC4626, IERC2612 {
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
     function asset() external view returns (address);
+    function totalAssets() external view returns (uint256);
+    function totalSupply() external view returns (uint256);
     function timelock(bytes4 selector) external view returns (uint256);
     function abdicated(bytes4 selector) external view returns (bool);
     function executableAt(bytes memory data) external view returns (uint256);
