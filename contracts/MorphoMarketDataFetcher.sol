@@ -9,6 +9,21 @@ struct MarketParams {
     uint256 lltv;
 }
 
+interface IChainlinkAggregator {
+    function decimals() external view returns (uint8);
+
+    function latestRoundData()
+        external
+        view
+        returns (
+            uint80 roundId,
+            int256 answer,
+            uint256 startedAt,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        );
+}
+
 interface IERC20Metadata {
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
@@ -50,6 +65,13 @@ contract MorphoMarketDataFetcher {
         uint256 userAllowance;
     }
 
+    struct MockOracleInfo {
+        address oracleAddress;
+        uint256 price;
+        string symbol;
+        uint8 decimals;
+    }
+
     struct OracleInfo {
         address oracleAddress;
         address baseFeed1;
@@ -62,6 +84,8 @@ contract MorphoMarketDataFetcher {
         address quoteVaultConversionSample;
         uint256 scaleFactor;
         uint256 currentPrice;
+        MockOracleInfo baseFeed;
+        MockOracleInfo quoteFeed;
     }
 
     struct MarketData {
@@ -117,6 +141,32 @@ contract MorphoMarketDataFetcher {
             try IMorphoChainlinkOracleV2(oracle).QUOTE_VAULT_CONVERSION_SAMPLE() returns (address a) { data.oracle.quoteVaultConversionSample = a; } catch {}
             try IMorphoChainlinkOracleV2(oracle).SCALE_FACTOR() returns (uint256 s) { data.oracle.scaleFactor = s; } catch {}
             try IMorphoChainlinkOracleV2(oracle).price() returns (uint256 p) { data.oracle.currentPrice = p; } catch {}
+        }
+        
+        if (data.oracle.baseFeed1 != address(0)) {
+            data.oracle.baseFeed.oracleAddress = data.oracle.baseFeed1;
+            
+            try IChainlinkAggregator(data.oracle.baseFeed1).latestRoundData() returns (
+                uint80, int256 answer, uint256, uint256, uint80
+            ) { 
+                data.oracle.baseFeed.price = answer > 0 ? uint256(answer) : 0; 
+            } catch {}
+
+            try IChainlinkAggregator(data.oracle.baseFeed1).decimals() returns (uint8 _dec) { data.oracle.baseFeed.decimals = _dec; } catch {}
+            try IERC20Metadata(data.oracle.baseFeed1).symbol() returns (string memory _sym) { data.oracle.baseFeed.symbol = _sym; } catch {}
+        }
+
+        if (data.oracle.quoteFeed1 != address(0)) {
+            data.oracle.quoteFeed.oracleAddress = data.oracle.quoteFeed1;
+            
+            try IChainlinkAggregator(data.oracle.quoteFeed1).latestRoundData() returns (
+                uint80, int256 answer, uint256, uint256, uint80
+            ) { 
+                data.oracle.quoteFeed.price = answer > 0 ? uint256(answer) : 0; 
+            } catch {}
+
+            try IChainlinkAggregator(data.oracle.quoteFeed1).decimals() returns (uint8 _dec) { data.oracle.quoteFeed.decimals = _dec; } catch {}
+            try IERC20Metadata(data.oracle.quoteFeed1).symbol() returns (string memory _sym) { data.oracle.quoteFeed.symbol = _sym; } catch {}
         }
 
         if (morphoAddress != address(0) && marketId != bytes32(0)) {
