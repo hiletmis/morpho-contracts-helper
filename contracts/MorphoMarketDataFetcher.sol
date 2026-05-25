@@ -92,55 +92,44 @@ contract MorphoMarketDataFetcher {
         TokenInfo loanToken;
         TokenInfo collateralToken;
         OracleInfo oracle;
+        MarketParams marketParams;
         uint256 deadAddressSupply;
     }
 
-    function getMarketDetailsById(bytes32 marketId) external view returns (MarketData memory) {
+    function getMarketDetails(
+        bytes32 marketId
+    ) external view returns (MarketData memory data) {
+
         MarketParams memory params = IMorpho(morphoAddress).idToMarketParams(marketId);
         
-        return this.getMarketDetails(
-            params.loanToken,
-            params.collateralToken,
-            params.oracle,
-            marketId,
-            msg.sender
-        );
-    }
-
-    function getMarketDetails(
-        address loanToken,
-        address collateralToken,
-        address oracle,
-        bytes32 marketId,
-        address connectedAddress
-    ) external view returns (MarketData memory data) {
+        data.marketParams = params;
         
-        data.loanToken.tokenAddress = loanToken;
-        try IERC20Metadata(loanToken).name() returns (string memory _name) { data.loanToken.name = _name; } catch {}
-        try IERC20Metadata(loanToken).symbol() returns (string memory _sym) { data.loanToken.symbol = _sym; } catch {}
-        try IERC20Metadata(loanToken).decimals() returns (uint8 _dec) { data.loanToken.decimals = _dec; } catch {}
+        data.loanToken.tokenAddress = params.loanToken;
+        try IERC20Metadata(params.loanToken).name() returns (string memory _name) { data.loanToken.name = _name; } catch {}
+        try IERC20Metadata(params.loanToken).symbol() returns (string memory _sym) { data.loanToken.symbol = _sym; } catch {}
+        try IERC20Metadata(params.loanToken).decimals() returns (uint8 _dec) { data.loanToken.decimals = _dec; } catch {}
         
-        if (connectedAddress != address(0) && morphoAddress != address(0)) {
-            try IERC20Metadata(loanToken).allowance(connectedAddress, morphoAddress) returns (uint256 _allow) { data.loanToken.userAllowance = _allow; } catch {}
+        if (msg.sender != address(0) && morphoAddress != address(0)) {
+            try IERC20Metadata(params.loanToken).allowance(msg.sender, morphoAddress) returns (uint256 _allow) { data.loanToken.userAllowance = _allow; } catch {}
         }
 
-        data.collateralToken.tokenAddress = collateralToken;
-        try IERC20Metadata(collateralToken).name() returns (string memory _name) { data.collateralToken.name = _name; } catch {}
-        try IERC20Metadata(collateralToken).symbol() returns (string memory _sym) { data.collateralToken.symbol = _sym; } catch {}
-        try IERC20Metadata(collateralToken).decimals() returns (uint8 _dec) { data.collateralToken.decimals = _dec; } catch {}
+        data.collateralToken.tokenAddress = params.collateralToken;
+        try IERC20Metadata(params.collateralToken).name() returns (string memory _name) { data.collateralToken.name = _name; } catch {}
+        try IERC20Metadata(params.collateralToken).symbol() returns (string memory _sym) { data.collateralToken.symbol = _sym; } catch {}
+        try IERC20Metadata(params.collateralToken).decimals() returns (uint8 _dec) { data.collateralToken.decimals = _dec; } catch {}
 
-        if (oracle != address(0)) {
-            data.oracle.oracleAddress = oracle;
-            try IMorphoChainlinkOracleV2(oracle).BASE_FEED_1() returns (address a) { data.oracle.baseFeed1 = a; } catch {}
-            try IMorphoChainlinkOracleV2(oracle).BASE_FEED_2() returns (address a) { data.oracle.baseFeed2 = a; } catch {}
-            try IMorphoChainlinkOracleV2(oracle).BASE_VAULT() returns (address a) { data.oracle.baseVault = a; } catch {}
-            try IMorphoChainlinkOracleV2(oracle).BASE_VAULT_CONVERSION_SAMPLE() returns (address a) { data.oracle.baseVaultConversionSample = a; } catch {}
-            try IMorphoChainlinkOracleV2(oracle).QUOTE_FEED_1() returns (address a) { data.oracle.quoteFeed1 = a; } catch {}
-            try IMorphoChainlinkOracleV2(oracle).QUOTE_FEED_2() returns (address a) { data.oracle.quoteFeed2 = a; } catch {}
-            try IMorphoChainlinkOracleV2(oracle).QUOTE_VAULT() returns (address a) { data.oracle.quoteVault = a; } catch {}
-            try IMorphoChainlinkOracleV2(oracle).QUOTE_VAULT_CONVERSION_SAMPLE() returns (address a) { data.oracle.quoteVaultConversionSample = a; } catch {}
-            try IMorphoChainlinkOracleV2(oracle).SCALE_FACTOR() returns (uint256 s) { data.oracle.scaleFactor = s; } catch {}
-            try IMorphoChainlinkOracleV2(oracle).price() returns (uint256 p) { data.oracle.currentPrice = p; } catch {}
+        if (params.oracle != address(0)) {
+            data.oracle.oracleAddress = params.oracle;
+            try IMorphoChainlinkOracleV2(params.oracle).BASE_FEED_1() returns (address a) { data.oracle.baseFeed1 = a; } catch {}
+            try IMorphoChainlinkOracleV2(params.oracle).BASE_FEED_2() returns (address a) { data.oracle.baseFeed2 = a; } catch {}
+            try IMorphoChainlinkOracleV2(params.oracle).BASE_VAULT() returns (address a) { data.oracle.baseVault = a; } catch {}
+            try IMorphoChainlinkOracleV2(params.oracle).BASE_VAULT_CONVERSION_SAMPLE() returns (address a) { data.oracle.baseVaultConversionSample = a; } catch {}
+            try IMorphoChainlinkOracleV2(params.oracle).QUOTE_FEED_1() returns (address a) { data.oracle.quoteFeed1 = a; } catch {}
+            try IMorphoChainlinkOracleV2(params.oracle).QUOTE_FEED_2() returns (address a) { data.oracle.quoteFeed2 = a; } catch {}
+            try IMorphoChainlinkOracleV2(params.oracle).QUOTE_VAULT() returns (address a) { data.oracle.quoteVault = a; } catch {}
+            try IMorphoChainlinkOracleV2(params.oracle).QUOTE_VAULT_CONVERSION_SAMPLE() returns (address a) { data.oracle.quoteVaultConversionSample = a; } catch {}
+            try IMorphoChainlinkOracleV2(params.oracle).SCALE_FACTOR() returns (uint256 s) { data.oracle.scaleFactor = s; } catch {}
+            try IMorphoChainlinkOracleV2(params.oracle).price() returns (uint256 p) { data.oracle.currentPrice = p; } catch {}
         }
         
         if (data.oracle.baseFeed1 != address(0)) {
