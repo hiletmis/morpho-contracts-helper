@@ -97,7 +97,8 @@ contract MorphoMarketDataFetcher {
     }
 
     function getMarketDetails(
-        bytes32 marketId
+        bytes32 marketId,
+        address user
     ) external view returns (MarketData memory data) {
 
         MarketParams memory params = IMorpho(morphoAddress).idToMarketParams(marketId);
@@ -109,8 +110,10 @@ contract MorphoMarketDataFetcher {
         try IERC20Metadata(params.loanToken).symbol() returns (string memory _sym) { data.loanToken.symbol = _sym; } catch {}
         try IERC20Metadata(params.loanToken).decimals() returns (uint8 _dec) { data.loanToken.decimals = _dec; } catch {}
         
-        if (msg.sender != address(0) && morphoAddress != address(0)) {
-            try IERC20Metadata(params.loanToken).allowance(msg.sender, morphoAddress) returns (uint256 _allow) { data.loanToken.userAllowance = _allow; } catch {}
+        if (user != address(0) && morphoAddress != address(0)) {
+            try IERC20Metadata(params.loanToken).allowance(user, morphoAddress) returns (uint256 _allow) { 
+                data.loanToken.userAllowance = _allow; 
+            } catch {}
         }
 
         data.collateralToken.tokenAddress = params.collateralToken;
