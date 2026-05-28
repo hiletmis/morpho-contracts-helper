@@ -1,6 +1,6 @@
 {
   "name": "morpho-contracts-helper",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "description": "",
   "main": "dist/src/index",
   "types": "dist/src/index",
